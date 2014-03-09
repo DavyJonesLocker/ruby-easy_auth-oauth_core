@@ -1,4 +1,3 @@
-### EasyAuth-OAuth2 0.2.0
+### EasyAuth-OAuthCore 0.1.0
 
-* Rewrote account creation to delegate to account controller's create
-  action
+* Initial extraction from EasyAuth-OAuth2
