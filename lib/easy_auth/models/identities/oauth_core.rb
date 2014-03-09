@@ -1,9 +1,5 @@
 module EasyAuth::Models::Identities::OauthCore
-  def self.included(base)
-    base.class_eval do
-      extend ClassMethods
-    end
-  end
+  extend ActiveSupport::Concern
 
   module ClassMethods
     def authenticate(controller)
