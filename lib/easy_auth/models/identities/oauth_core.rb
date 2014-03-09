@@ -4,17 +4,17 @@ module EasyAuth::Models::Identities::OauthCore
   module ClassMethods
     def authenticate(controller)
       if can_authenticate?(controller)
-        identity, user_info = *yield
+        identity, user_attributes = *yield
 
         if controller.current_account
-          with_account(identity, controller, user_info)
+          with_account(identity, controller, user_attributes)
         else
-          without_account(identity, controller, user_info)
+          without_account(identity, controller, user_attributes)
         end
       end
     end
 
-    def with_account(identity, controller, user_info)
+    def with_account(identity, controller, user_attributes)
       if identity.account
         if identity.account != controller.current_account
           controller.flash[:error] = I18n.t('easy_auth.oauth2.sessions.create.error')
@@ -29,12 +29,12 @@ module EasyAuth::Models::Identities::OauthCore
       return identity
     end
 
-    def without_account(identity, controller, user_info)
+    def without_account(identity, controller, user_attributes)
       unless identity.account
         account_model_name = EasyAuth.account_model.model_name
         env = clean_env(controller.env.dup)
 
-        env['QUERY_STRING'] = {account_model_name.param_key => account_attributes(user_info, identity)}.to_param
+        env['QUERY_STRING'] = {account_model_name.param_key => account_attributes(user_attributes, identity)}.to_param
 
         account_controller_class = ActiveSupport::Dependencies.constantize("#{account_model_name.route_key.camelize}Controller")
         account_controller = account_controller_class.new
@@ -54,6 +54,49 @@ module EasyAuth::Models::Identities::OauthCore
       controller.params[:code].present? && controller.params[:error].blank?
     end
 
+    def account_attributes(user_attributes, identity)
+      EasyAuth.account_model.define_attribute_methods unless EasyAuth.account_model.attribute_methods_generated?
+      setters = EasyAuth.account_model.instance_methods.grep(/=$/) - [:id=]
+
+      attributes = account_attributes_map.inject({}) do |hash, kv|
+        if setters.include?("#{kv[0]}=".to_sym)
+          hash[kv[0]] = user_attributes[kv[1]]
+        end
+
+        hash
+      end
+
+      attributes[:identities_attributes] = [
+        { uid: identity.uid, token: identity.token, type: identity.class.model_name.to_s }
+      ]
+
+      return attributes
+    end
+
+    def account_attributes_map
+      { :email => 'email' }
+    end
+
+    def client_id
+      settings.client_id
+    end
+
+    def secret
+      settings.secret
+    end
+
+    def settings
+      EasyAuth.oauth2[provider]
+    end
+
+    def provider
+      self.to_s.split('::').last.underscore.to_sym
+    end
+
+    def retrieve_uid(user_attributes)
+      raise NotImplementedError
+    end
+
     private
 
     def clean_env(env)
@@ -65,5 +108,9 @@ module EasyAuth::Models::Identities::OauthCore
       env.delete('rack.request.query_hash')
       env
     end
+  end
+
+  def get_access_token
+    self.class.get_access_token self
   end
 end
