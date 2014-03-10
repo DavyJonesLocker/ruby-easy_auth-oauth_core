@@ -12,6 +12,4 @@ Gem::Specification.new do |s|
   s.description = 'EasyAuth-OauthCore'
 
   s.files = Dir['{app,config,db,lib}/**/*'] + ['Rakefile', 'README.md']
-
-  s.add_dependency 'easy_auth', '~> 0.3.0'
 end
