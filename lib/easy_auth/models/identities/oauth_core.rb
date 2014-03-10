@@ -51,7 +51,7 @@ module EasyAuth::Models::Identities::OauthCore
     end
 
     def can_authenticate?(controller)
-      controller.params[:code].present? && controller.params[:error].blank?
+      raise NotImplementedError
     end
 
     def account_attributes(user_attributes, identity)
