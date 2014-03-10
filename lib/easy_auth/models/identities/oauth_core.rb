@@ -30,7 +30,9 @@ module EasyAuth::Models::Identities::OauthCore
     end
 
     def without_account(identity, controller, user_attributes)
-      unless identity.account
+      if identity.account
+        return identity
+      else
         account_model_name = EasyAuth.account_model.model_name
         env = clean_env(controller.env.dup)
 
