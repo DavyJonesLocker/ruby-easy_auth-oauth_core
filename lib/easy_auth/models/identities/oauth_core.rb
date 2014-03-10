@@ -4,17 +4,17 @@ module EasyAuth::Models::Identities::OauthCore
   module ClassMethods
     def authenticate(controller)
       if can_authenticate?(controller)
-        identity, user_attributes = *yield
+        identity, account_attributes = *yield
 
         if controller.current_account
-          with_account(identity, controller, user_attributes)
+          with_account(identity, controller, account_attributes)
         else
-          without_account(identity, controller, user_attributes)
+          without_account(identity, controller, account_attributes)
         end
       end
     end
 
-    def with_account(identity, controller, user_attributes)
+    def with_account(identity, controller, account_attributes)
       if identity.account
         if identity.account != controller.current_account
           controller.flash[:error] = I18n.t('easy_auth.oauth2.sessions.create.error')
@@ -29,14 +29,14 @@ module EasyAuth::Models::Identities::OauthCore
       return identity
     end
 
-    def without_account(identity, controller, user_attributes)
+    def without_account(identity, controller, account_attributes)
       if identity.account
         return identity
       else
         account_model_name = EasyAuth.account_model.model_name
         env = clean_env(controller.env.dup)
 
-        env['QUERY_STRING'] = {account_model_name.param_key => account_attributes(user_attributes, identity)}.to_param
+        env['QUERY_STRING'] = {account_model_name.param_key => account_attributes(account_attributes, identity)}.to_param
 
         account_controller_class = ActiveSupport::Dependencies.constantize("#{account_model_name.route_key.camelize}Controller")
         account_controller = account_controller_class.new
@@ -56,13 +56,13 @@ module EasyAuth::Models::Identities::OauthCore
       raise NotImplementedError
     end
 
-    def account_attributes(user_attributes, identity)
+    def account_attributes(account_attributes, identity)
       EasyAuth.account_model.define_attribute_methods unless EasyAuth.account_model.attribute_methods_generated?
       setters = EasyAuth.account_model.instance_methods.grep(/=$/) - [:id=]
 
       attributes = account_attributes_map.inject({}) do |hash, kv|
         if setters.include?("#{kv[0]}=".to_sym)
-          hash[kv[0]] = user_attributes[kv[1]]
+          hash[kv[0]] = account_attributes[kv[1]]
         end
 
         hash
@@ -95,7 +95,7 @@ module EasyAuth::Models::Identities::OauthCore
       self.to_s.split('::').last.underscore.to_sym
     end
 
-    def retrieve_uid(user_attributes)
+    def retrieve_uid(account_attributes)
       raise NotImplementedError
     end
 
