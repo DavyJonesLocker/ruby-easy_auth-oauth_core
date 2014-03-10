@@ -86,7 +86,7 @@ module EasyAuth::Models::Identities::OauthCore
     end
 
     def settings
-      EasyAuth.oauth2[provider]
+      EasyAuth.send(version)[provider]
     end
 
     def provider
