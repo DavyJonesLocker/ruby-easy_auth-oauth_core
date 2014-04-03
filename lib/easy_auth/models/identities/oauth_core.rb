@@ -57,7 +57,7 @@ module EasyAuth::Models::Identities::OauthCore
     end
 
     def account_attributes(account_attributes, identity)
-      EasyAuth.account_model.define_attribute_methods unless EasyAuth.account_model.attribute_methods_generated?
+      EasyAuth.account_model.define_attribute_methods unless EasyAuth.account_model.instance_variable_get(:@attribute_methods_generated)
       setters = EasyAuth.account_model.instance_methods.grep(/=$/) - [:id=]
 
       attributes = account_attributes_map.inject({}) do |hash, kv|
