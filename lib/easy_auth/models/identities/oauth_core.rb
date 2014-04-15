@@ -36,7 +36,7 @@ module EasyAuth::Models::Identities::OauthCore
         account_model_name = EasyAuth.account_model.model_name
         env = clean_env(controller.env.dup)
 
-        env['QUERY_STRING'] = {account_model_name.param_key => account_attributes(account_attributes, identity)}.to_param
+        env['QUERY_STRING'] = {account_model_name.param_key => account_attributes(account_attributes, identity), 'identity' => controller.params[:identity]}.to_param
 
         account_controller_class = ActiveSupport::Dependencies.constantize("#{account_model_name.route_key.camelize}Controller")
         account_controller = account_controller_class.new
